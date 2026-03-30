@@ -1,0 +1,13 @@
+# Ignore heavy / generated / secrets
+node_modules/
+dist/
+build/
+.idea/
+.vscode/
+.DS_Store
+
+# Secrets
+.env
+**/*.pem
+**/*secret*
+**/*key*

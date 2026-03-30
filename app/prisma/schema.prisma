@@ -1,0 +1,156 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Role {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  users User[]
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  fullName  String
+  email     String   @unique
+  roleId    Int
+  role      Role     @relation(fields: [roleId], references: [id])
+  active    Boolean  @default(true)
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  leadsCreated Lead[] @relation("LeadCreatedBy")
+
+  leadAssignees LeadAssignee[]
+
+  statusChanges LeadStatusHistory[]
+
+  assignmentHistories LeadAssignmentHistory[]
+
+  priorityChanges LeadPriorityHistory[]
+}
+
+enum LeadStatus {
+  NEW
+  INITIAL_ESTIMATION_NEEDS_CLARIFICATION
+  ASSIGNED_TO_EXECUTOR
+  IN_DISCUSSION
+  COMPLETED
+  REJECTED
+  POSTPONED
+}
+
+/** Порядок значений задаёт сортировку по возрастанию: низкий → средний → высокий. */
+enum LeadPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model LeadSource {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  leads Lead[]
+  ingestTokens LeadIngestToken[]
+}
+
+/** Токен для приёма лидов из внешних систем (только Admin). Полный секрет не хранится — только SHA-256 и маска «xx…yy». */
+model LeadIngestToken {
+  id            Int        @id @default(autoincrement())
+  displayName   String
+  sourceId      Int
+  source        LeadSource @relation(fields: [sourceId], references: [id], onDelete: Restrict)
+  tokenHash     String     @unique
+  /** Маска для списка: первые 2 + «...» + последние 2 символа исходного токена. */
+  tokenPreview  String
+  createdAt     DateTime   @default(now())
+}
+
+model Lead {
+  id          String     @id
+  companyName String
+  contactName String
+  description String?
+  sourceId    Int
+  source      LeadSource @relation(fields: [sourceId], references: [id])
+  status      LeadStatus
+  priority    LeadPriority @default(MEDIUM)
+  budget      Decimal?   @db.Decimal(14, 2)
+  finishDate  DateTime? @db.Date
+  createdById Int
+  createdBy   User       @relation("LeadCreatedBy", fields: [createdById], references: [id])
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  contacts          LeadContact[]
+  assignees         LeadAssignee[]
+  statusHistory     LeadStatusHistory[]
+  assignmentHistory LeadAssignmentHistory[]
+  priorityHistory   LeadPriorityHistory[]
+}
+
+model LeadContact {
+  id          Int      @id @default(autoincrement())
+  leadId      String
+  lead        Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  sourceType  String
+  sourceValue String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model LeadAssignee {
+  id        Int      @id @default(autoincrement())
+  leadId    String
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([leadId, userId])
+}
+
+model LeadStatusHistory {
+  id             Int         @id @default(autoincrement())
+  leadId         String
+  lead           Lead        @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  previousStatus LeadStatus?
+  newStatus      LeadStatus
+  changedById    Int
+  changedBy      User        @relation(fields: [changedById], references: [id])
+  changedAt      DateTime    @default(now())
+  comment        String?
+}
+
+model LeadPriorityHistory {
+  id               Int           @id @default(autoincrement())
+  leadId           String
+  lead             Lead          @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  previousPriority LeadPriority?
+  newPriority      LeadPriority
+  changedById      Int
+  changedBy        User          @relation(fields: [changedById], references: [id])
+  changedAt        DateTime      @default(now())
+  comment          String?
+}
+
+enum AssignmentAction {
+  ADDED
+  REMOVED
+}
+
+model LeadAssignmentHistory {
+  id        Int              @id @default(autoincrement())
+  leadId    String
+  lead      Lead             @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  userId    Int
+  user      User             @relation(fields: [userId], references: [id])
+  action    AssignmentAction
+  createdAt DateTime         @default(now())
+  comment   String?
+}

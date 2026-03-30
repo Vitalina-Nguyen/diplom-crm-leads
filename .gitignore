@@ -1,0 +1,4 @@
+storage/postgres/**
+docs
+
+.env
