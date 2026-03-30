@@ -68,7 +68,7 @@ export async function createLead(formData: FormData): Promise<ActionResult> {
     budget: formData.get("budget") ?? undefined,
     finishDate:
       typeof formData.get("finishDate") === "string" ? formData.get("finishDate") : undefined,
-    assigneeIds: assigneeRaw.length ? assigneeRaw.map(Number) : undefined,
+    assigneeIds: assigneeRaw.length ? assigneeRaw : undefined,
     contacts,
   });
   if (!parsed.success) {

@@ -13,8 +13,8 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 
-type Source = { id: number; name: string };
-type UserOpt = { id: number; fullName: string; email: string };
+type Source = { id: string; name: string };
+type UserOpt = { id: string; fullName: string; email: string };
 
 type ContactRow = { sourceType: string; sourceValue: string };
 

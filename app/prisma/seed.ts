@@ -44,7 +44,7 @@ async function main() {
   });
 
   await prisma.user.upsert({
-    where: { email: "member@example.com" },
+    where: { email: "manager@example.com" },
     update: {
       fullName: "Сотрудник",
       password: passwordHash,
@@ -52,7 +52,7 @@ async function main() {
       active: true,
     },
     create: {
-      email: "member@example.com",
+      email: "manager@example.com",
       fullName: "Сотрудник",
       password: passwordHash,
       roleId: memberRole.id,

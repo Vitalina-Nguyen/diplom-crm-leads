@@ -2,10 +2,10 @@ import { ru } from "@/messages/ru";
 import { z } from "zod";
 
 export const updateUserAdminSchema = z.object({
-  userId: z.coerce.number().int().positive(),
+  userId: z.string().uuid(ru.validation.invalidUuid),
   fullName: z.string().trim().min(1, ru.validation.userNameRequired),
   email: z.string().trim().email(ru.validation.invalidEmail),
-  roleId: z.coerce.number().int().positive(),
+  roleId: z.string().uuid(ru.validation.invalidUuid),
   active: z.enum(["true", "false"]).transform((v) => v === "true"),
   newPassword: z
     .string()
@@ -16,13 +16,13 @@ export const updateUserAdminSchema = z.object({
 });
 
 export const deactivateUserAdminSchema = z.object({
-  userId: z.coerce.number().int().positive(),
+  userId: z.string().uuid(ru.validation.invalidUuid),
 });
 
 export const createUserAdminSchema = z.object({
   fullName: z.string().trim().min(1, ru.validation.userNameRequired),
   email: z.string().trim().email(ru.validation.invalidEmail),
   password: z.string().min(8, ru.validation.passwordMin8),
-  roleId: z.coerce.number().int().positive(),
+  roleId: z.string().uuid(ru.validation.invalidUuid),
   active: z.enum(["true", "false"]).transform((v) => v === "true"),
 });

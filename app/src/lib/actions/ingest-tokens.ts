@@ -32,7 +32,7 @@ export async function createIngestTokenAction(formData: FormData): Promise<Creat
 
   try {
     await prisma.$transaction(async (tx) => {
-      let sourceId: number;
+      let sourceId: string;
       if (sourceMode === "new") {
         const name = normalizeSourceName(String(formData.get("newSourceName") ?? ""));
         if (!name) {
@@ -44,8 +44,8 @@ export async function createIngestTokenAction(formData: FormData): Promise<Creat
         const src = await tx.leadSource.create({ data: { name } });
         sourceId = src.id;
       } else {
-        sourceId = Number(formData.get("sourceId"));
-        if (!Number.isFinite(sourceId) || sourceId <= 0) {
+        sourceId = String(formData.get("sourceId") ?? "").trim();
+        if (!sourceId) {
           throw new Error("SOURCE_NOT_FOUND");
         }
         const exists = await tx.leadSource.findUnique({ where: { id: sourceId } });
@@ -92,7 +92,7 @@ export async function createIngestTokenAction(formData: FormData): Promise<Creat
 
 export type RevokeIngestTokenResult = { ok: true } | { ok: false; error: string };
 
-export async function revokeIngestTokenAction(tokenId: number): Promise<RevokeIngestTokenResult> {
+export async function revokeIngestTokenAction(tokenId: string): Promise<RevokeIngestTokenResult> {
   await requireAdmin();
 
   try {

@@ -12,13 +12,13 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 
-type RoleOpt = { id: number; name: string };
+type RoleOpt = { id: string; name: string };
 
 type UserPayload = {
-  id: number;
+  id: string;
   fullName: string;
   email: string;
-  roleId: number;
+  roleId: string;
   active: boolean;
 };
 

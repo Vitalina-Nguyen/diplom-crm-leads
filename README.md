@@ -22,10 +22,9 @@ cp .env.example .env
 В каталоге **`app/`** создайте файл **`app/.env`** (или `app/.env.local`) со строкой подключения к БД **с вашей машины** (не имя сервиса `postgres`, а `localhost` и тот же порт, что в `POSTGRES_PORT`):
 
 ```env
-DATABASE_URL="postgresql://crm:crm@localhost:5432/crm"
+DATABASE_URL="postgresql://app:app@localhost:5432/app"
 ```
 
-Замените `crm` / `crm` / `crm` / порт, если меняли их в корневом `.env`. Пароль и пользователь должны совпадать с `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`.
 
 > Если `DATABASE_URL` в `app/.env` не задан, скрипт сида (`prisma/seed.ts` через `load-env.ts`) может собрать URL из переменных `POSTGRES_*` корневого `.env`. Команды **Prisma CLI** (`migrate`, `generate`) обычно читают в первую очередь `app/.env`, поэтому для миграций надёжнее явно указать `DATABASE_URL` в `app/`.
 

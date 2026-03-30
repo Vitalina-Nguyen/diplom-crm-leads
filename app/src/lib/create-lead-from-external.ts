@@ -9,8 +9,8 @@ import { ru } from "@/messages/ru";
  * статус NEW, приоритет авто, создатель — переданный admin user id.
  */
 export async function createLeadFromExternalIngest(params: {
-  sourceId: number;
-  createdById: number;
+  sourceId: string;
+  createdById: string;
   companyName: string;
   contactName: string;
   description: string | null;

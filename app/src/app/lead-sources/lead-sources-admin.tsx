@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Table, Td, Th } from "@/components/ui/table";
 import { formatLeadSourceName, ru } from "@/messages/ru";
 
-type Row = { id: number; name: string };
+type Row = { id: string; name: string };
 
 export function LeadSourcesAdmin({ sources }: { sources: Row[] }) {
   const router = useRouter();

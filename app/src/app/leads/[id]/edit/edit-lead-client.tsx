@@ -27,19 +27,19 @@ type LeadPayload = {
   companyName: string;
   contactName: string;
   description: string | null;
-  sourceId: number;
+  sourceId: string;
   budget: string;
   finishDate: string;
   status: LeadStatus;
   priority: LeadPriority;
   isActive: boolean;
   isFinal: boolean;
-  contacts: { id: number; sourceType: string; sourceValue: string }[];
-  assignees: { userId: number; fullName: string; email: string }[];
+  contacts: { id: string; sourceType: string; sourceValue: string }[];
+  assignees: { userId: string; fullName: string; email: string }[];
 };
 
-type Source = { id: number; name: string };
-type UserOpt = { id: number; fullName: string; email: string };
+type Source = { id: string; name: string };
+type UserOpt = { id: string; fullName: string; email: string };
 
 export function EditLeadClient({
   lead,
@@ -338,7 +338,7 @@ export function EditLeadClient({
                       setMsg(null);
                       setErr(null);
                       fd.set("leadId", lead.id);
-                      fd.set("userId", String(a.userId));
+                      fd.set("userId", a.userId);
                       start(async () => {
                         const r = await removeLeadAssignee(fd);
                         flash(r.ok, r.ok ? ru.editLead.flashAssigneeRemoved : r.error);

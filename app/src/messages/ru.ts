@@ -278,6 +278,7 @@ export const ru = {
     userNameRequired: "Укажите имя",
     passwordMin8: "Пароль не короче 8 символов",
     priorityRequired: "Выберите приоритет",
+    invalidUuid: "Некорректный идентификатор (UUID)",
   },
   history: {
     leadCreated: "Лид создан",

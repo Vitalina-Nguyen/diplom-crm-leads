@@ -13,22 +13,22 @@ import { ru } from "@/messages/ru";
 
 export type UserAdminActionResult = { ok: true } | { ok: false; error: string };
 
-function revalidateUserPaths(userId: number) {
+function revalidateUserPaths(userId: string) {
   revalidatePath("/users");
   revalidatePath(`/users/${userId}`);
   revalidatePath(`/users/${userId}/edit`);
 }
 
-async function getAdminRoleId(): Promise<number | null> {
+async function getAdminRoleId(): Promise<string | null> {
   const r = await prisma.role.findUnique({ where: { name: ADMIN_ROLE_NAME } });
   return r?.id ?? null;
 }
 
 async function assertNotRemovingLastAdmin(params: {
-  targetId: number;
-  prevRoleId: number;
+  targetId: string;
+  prevRoleId: string;
   prevActive: boolean;
-  nextRoleId: number;
+  nextRoleId: string;
   nextActive: boolean;
 }): Promise<UserAdminActionResult> {
   const adminRoleId = await getAdminRoleId();
@@ -132,7 +132,7 @@ export async function updateUserAdmin(formData: FormData): Promise<UserAdminActi
     const data: {
       fullName: string;
       email: string;
-      roleId: number;
+      roleId: string;
       active: boolean;
       password?: string;
     } = {
@@ -157,7 +157,7 @@ export async function updateUserAdmin(formData: FormData): Promise<UserAdminActi
   return { ok: true };
 }
 
-export async function deactivateUserAdmin(userId: number): Promise<UserAdminActionResult> {
+export async function deactivateUserAdmin(userId: string): Promise<UserAdminActionResult> {
   const editor = await requireAdmin();
 
   const parsed = deactivateUserAdminSchema.safeParse({ userId });

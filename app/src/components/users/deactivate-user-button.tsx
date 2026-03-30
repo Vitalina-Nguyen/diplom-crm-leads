@@ -11,7 +11,7 @@ export function DeactivateUserButton({
   disabled,
   disabledTitle,
 }: {
-  userId: number;
+  userId: string;
   disabled?: boolean;
   disabledTitle?: string;
 }) {

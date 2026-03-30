@@ -41,7 +41,7 @@ export async function createLeadSourceAdmin(formData: FormData): Promise<LeadSou
   return { ok: true };
 }
 
-export async function deleteLeadSourceAdmin(sourceId: number): Promise<LeadSourceActionResult> {
+export async function deleteLeadSourceAdmin(sourceId: string): Promise<LeadSourceActionResult> {
   await requireAdmin();
 
   const source = await prisma.leadSource.findUnique({ where: { id: sourceId } });

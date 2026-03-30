@@ -7,16 +7,16 @@ datasource db {
 }
 
 model Role {
-  id    Int    @id @default(autoincrement())
+  id    String @id @default(uuid()) @db.Uuid
   name  String @unique
   users User[]
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(uuid()) @db.Uuid
   fullName  String
   email     String   @unique
-  roleId    Int
+  roleId    String   @db.Uuid
   role      Role     @relation(fields: [roleId], references: [id])
   active    Boolean  @default(true)
   password  String
@@ -52,40 +52,40 @@ enum LeadPriority {
 }
 
 model LeadSource {
-  id    Int    @id @default(autoincrement())
-  name  String @unique
-  leads Lead[]
+  id           String            @id @default(uuid()) @db.Uuid
+  name         String            @unique
+  leads        Lead[]
   ingestTokens LeadIngestToken[]
 }
 
 /** Токен для приёма лидов из внешних систем (только Admin). Полный секрет не хранится — только SHA-256 и маска «xx…yy». */
 model LeadIngestToken {
-  id            Int        @id @default(autoincrement())
-  displayName   String
-  sourceId      Int
-  source        LeadSource @relation(fields: [sourceId], references: [id], onDelete: Restrict)
-  tokenHash     String     @unique
+  id           String     @id @default(uuid()) @db.Uuid
+  displayName  String
+  sourceId     String     @db.Uuid
+  source       LeadSource @relation(fields: [sourceId], references: [id], onDelete: Restrict)
+  tokenHash    String     @unique
   /** Маска для списка: первые 2 + «...» + последние 2 символа исходного токена. */
-  tokenPreview  String
-  createdAt     DateTime   @default(now())
+  tokenPreview String
+  createdAt    DateTime   @default(now())
 }
 
 model Lead {
-  id          String     @id
+  id          String       @id @db.Uuid
   companyName String
   contactName String
   description String?
-  sourceId    Int
-  source      LeadSource @relation(fields: [sourceId], references: [id])
+  sourceId    String       @db.Uuid
+  source      LeadSource   @relation(fields: [sourceId], references: [id])
   status      LeadStatus
   priority    LeadPriority @default(MEDIUM)
-  budget      Decimal?   @db.Decimal(14, 2)
-  finishDate  DateTime? @db.Date
-  createdById Int
-  createdBy   User       @relation("LeadCreatedBy", fields: [createdById], references: [id])
-  isActive    Boolean    @default(true)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  budget      Decimal?     @db.Decimal(14, 2)
+  finishDate  DateTime?    @db.Date
+  createdById String       @db.Uuid
+  createdBy   User         @relation("LeadCreatedBy", fields: [createdById], references: [id])
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
   contacts          LeadContact[]
   assignees         LeadAssignee[]
@@ -95,8 +95,8 @@ model Lead {
 }
 
 model LeadContact {
-  id          Int      @id @default(autoincrement())
-  leadId      String
+  id          String   @id @default(uuid()) @db.Uuid
+  leadId      String   @db.Uuid
   lead        Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
   sourceType  String
   sourceValue String
@@ -105,10 +105,10 @@ model LeadContact {
 }
 
 model LeadAssignee {
-  id        Int      @id @default(autoincrement())
-  leadId    String
+  id        String   @id @default(uuid()) @db.Uuid
+  leadId    String   @db.Uuid
   lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  userId    Int
+  userId    String   @db.Uuid
   user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
 
@@ -116,24 +116,24 @@ model LeadAssignee {
 }
 
 model LeadStatusHistory {
-  id             Int         @id @default(autoincrement())
-  leadId         String
-  lead           Lead        @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  id             String       @id @default(uuid()) @db.Uuid
+  leadId         String       @db.Uuid
+  lead           Lead         @relation(fields: [leadId], references: [id], onDelete: Cascade)
   previousStatus LeadStatus?
   newStatus      LeadStatus
-  changedById    Int
-  changedBy      User        @relation(fields: [changedById], references: [id])
-  changedAt      DateTime    @default(now())
+  changedById    String       @db.Uuid
+  changedBy      User         @relation(fields: [changedById], references: [id])
+  changedAt      DateTime     @default(now())
   comment        String?
 }
 
 model LeadPriorityHistory {
-  id               Int           @id @default(autoincrement())
-  leadId           String
+  id               String        @id @default(uuid()) @db.Uuid
+  leadId           String        @db.Uuid
   lead             Lead          @relation(fields: [leadId], references: [id], onDelete: Cascade)
   previousPriority LeadPriority?
   newPriority      LeadPriority
-  changedById      Int
+  changedById      String        @db.Uuid
   changedBy        User          @relation(fields: [changedById], references: [id])
   changedAt        DateTime      @default(now())
   comment          String?
@@ -145,10 +145,10 @@ enum AssignmentAction {
 }
 
 model LeadAssignmentHistory {
-  id        Int              @id @default(autoincrement())
-  leadId    String
+  id        String           @id @default(uuid()) @db.Uuid
+  leadId    String           @db.Uuid
   lead      Lead             @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  userId    Int
+  userId    String           @db.Uuid
   user      User             @relation(fields: [userId], references: [id])
   action    AssignmentAction
   createdAt DateTime         @default(now())

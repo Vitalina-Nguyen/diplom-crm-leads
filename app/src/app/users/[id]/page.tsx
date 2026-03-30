@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { formatRoleName } from "@/lib/role-labels";
 import { ru } from "@/messages/ru";
@@ -18,8 +19,9 @@ function formatDt(d: Date): string {
 export default async function UserDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const editor = await requireAdmin();
   const { id: idRaw } = await params;
-  const id = Number(idRaw);
-  if (!Number.isFinite(id)) notFound();
+  const idParsed = z.string().uuid().safeParse(idRaw);
+  if (!idParsed.success) notFound();
+  const id = idParsed.data;
 
   const user = await prisma.user.findUnique({
     where: { id },

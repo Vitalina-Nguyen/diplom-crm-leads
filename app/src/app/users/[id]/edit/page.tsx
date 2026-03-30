@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-admin";
 import { EditUserForm } from "./edit-user-form";
@@ -6,8 +7,9 @@ import { EditUserForm } from "./edit-user-form";
 export default async function EditUserPage({ params }: { params: Promise<{ id: string }> }) {
   await requireAdmin();
   const { id: idRaw } = await params;
-  const id = Number(idRaw);
-  if (!Number.isFinite(id)) notFound();
+  const idParsed = z.string().uuid().safeParse(idRaw);
+  if (!idParsed.success) notFound();
+  const id = idParsed.data;
 
   const [user, roles] = await Promise.all([
     prisma.user.findUnique({

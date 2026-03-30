@@ -20,14 +20,14 @@ export const createLeadSchema = z
     companyName: z.string().trim().min(1, ru.validation.companyRequired),
     contactName: z.string().trim().min(1, ru.validation.contactRequired),
     description: z.string().trim().optional(),
-    sourceId: z.coerce.number().int().positive(),
+    sourceId: z.string().uuid(ru.validation.invalidUuid),
     /** При ручном режиме (`useAutoPriority === "0"`) обязателен. */
     priority: priorityEnum.optional(),
     /** `"1"` — автоопределение приоритета на сервере (по умолчанию). */
     useAutoPriority: z.preprocess((v) => (v === "0" ? "0" : "1"), z.enum(["0", "1"])),
     budget: budgetField,
     finishDate: finishDateField,
-    assigneeIds: z.array(z.coerce.number().int().positive()).optional(),
+    assigneeIds: z.array(z.string().uuid(ru.validation.invalidUuid)).optional(),
     contacts: z
       .array(
         z.object({
@@ -48,46 +48,46 @@ export const createLeadSchema = z
   });
 
 export const updateLeadSchema = z.object({
-  leadId: z.string().min(1),
+  leadId: z.string().uuid(ru.validation.invalidUuid),
   companyName: z.string().trim().min(1, ru.validation.companyRequired),
   contactName: z.string().trim().min(1, ru.validation.contactRequired),
   description: z.string().trim().optional(),
-  sourceId: z.coerce.number().int().positive(),
+  sourceId: z.string().uuid(ru.validation.invalidUuid),
   budget: budgetField,
   finishDate: finishDateField,
 });
 
 export const updateLeadStatusSchema = z.object({
-  leadId: z.string().min(1),
+  leadId: z.string().uuid(ru.validation.invalidUuid),
   newStatus: statusEnum,
   comment: z.string().trim().optional(),
 });
 
 export const updateLeadPrioritySchema = z.object({
-  leadId: z.string().min(1),
+  leadId: z.string().uuid(ru.validation.invalidUuid),
   newPriority: priorityEnum,
   comment: z.string().trim().optional(),
 });
 
 export const addContactSchema = z.object({
-  leadId: z.string().min(1),
+  leadId: z.string().uuid(ru.validation.invalidUuid),
   sourceType: z.string().trim().min(1, ru.validation.contactFieldRequired),
   sourceValue: z.string().trim().min(1, ru.validation.contactFieldRequired),
 });
 
 export const removeContactSchema = z.object({
-  contactId: z.coerce.number().int().positive(),
-  leadId: z.string().min(1),
+  contactId: z.string().uuid(ru.validation.invalidUuid),
+  leadId: z.string().uuid(ru.validation.invalidUuid),
 });
 
 export const addAssigneeSchema = z.object({
-  leadId: z.string().min(1),
-  userId: z.coerce.number().int().positive(),
+  leadId: z.string().uuid(ru.validation.invalidUuid),
+  userId: z.string().uuid(ru.validation.invalidUuid),
   comment: z.string().trim().optional(),
 });
 
 export const removeAssigneeSchema = z.object({
-  leadId: z.string().min(1),
-  userId: z.coerce.number().int().positive(),
+  leadId: z.string().uuid(ru.validation.invalidUuid),
+  userId: z.string().uuid(ru.validation.invalidUuid),
   comment: z.string().trim().optional(),
 });

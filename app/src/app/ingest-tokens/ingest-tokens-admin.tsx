@@ -9,9 +9,9 @@ import { Card, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Table, Td, Th } from "@/components/ui/table";
-type SourceOpt = { id: number; name: string };
+type SourceOpt = { id: string; name: string };
 type TokenRow = {
-  id: number;
+  id: string;
   displayName: string;
   tokenPreview: string;
   createdAt: string;
