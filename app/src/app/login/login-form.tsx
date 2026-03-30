@@ -13,18 +13,12 @@ export function LoginForm() {
   return (
     <Card className="w-full max-w-md">
       <CardTitle className="mb-6">{ru.login.title}</CardTitle>
-      <form
-        className="flex flex-col gap-4"
-        onSubmit={(e) => {
-          e.preventDefault();
-          formAction(new FormData(e.currentTarget));
-        }}
-      >
+      <form action={formAction} className="flex flex-col gap-4" autoComplete="off">
         <Input
           name="email"
           type="email"
           label={ru.login.email}
-          autoComplete="email"
+          autoComplete="off"
           required
           error={state?.fieldErrors?.email}
         />
@@ -32,7 +26,7 @@ export function LoginForm() {
           name="password"
           type="password"
           label={ru.login.password}
-          autoComplete="current-password"
+          autoComplete="off"
           required
           error={state?.fieldErrors?.password}
         />
