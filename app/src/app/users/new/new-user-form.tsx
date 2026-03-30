@@ -18,6 +18,7 @@ export function NewUserForm({ roles }: { roles: RoleOpt[] }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [err, setErr] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const defaultRoleId = roles[0]?.id;
 
@@ -26,12 +27,16 @@ export function NewUserForm({ roles }: { roles: RoleOpt[] }) {
       <CardTitle className="mb-6">{ru.users.newTitle}</CardTitle>
       <form
         className="flex max-w-xl flex-col gap-4"
-        action={(fd) => {
+        onSubmit={(e) => {
+          e.preventDefault();
           setErr(null);
+          setFieldErrors({});
+          const fd = new FormData(e.currentTarget);
           start(async () => {
             const r = await createUserAdmin(fd);
             if (!r.ok) {
               setErr(r.error);
+              setFieldErrors(r.fieldErrors ?? {});
               return;
             }
             router.push("/users");
@@ -39,14 +44,27 @@ export function NewUserForm({ roles }: { roles: RoleOpt[] }) {
           });
         }}
       >
-        <Input name="fullName" label={ru.users.colFullName} required />
-        <Input name="email" type="email" label={ru.users.colEmail} required autoComplete="off" />
+        <Input
+          name="fullName"
+          label={ru.users.colFullName}
+          required
+          error={fieldErrors.fullName}
+        />
+        <Input
+          name="email"
+          type="email"
+          label={ru.users.colEmail}
+          required
+          autoComplete="off"
+          error={fieldErrors.email}
+        />
         <Input
           name="password"
           type="password"
           label={ru.users.fieldPassword}
           required
           autoComplete="new-password"
+          error={fieldErrors.password}
         />
 
         <Select
@@ -55,6 +73,7 @@ export function NewUserForm({ roles }: { roles: RoleOpt[] }) {
           required
           defaultValue={defaultRoleId !== undefined ? String(defaultRoleId) : ""}
           placeholderOption={ru.users.fieldRole}
+          error={fieldErrors.roleId}
         >
           {roles.map((role) => (
             <option key={role.id} value={role.id}>
@@ -68,15 +87,25 @@ export function NewUserForm({ roles }: { roles: RoleOpt[] }) {
           <select
             id="active-new"
             name="active"
-            className="cursor-pointer rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none ring-blue-500 focus:border-blue-500 focus:ring-2 disabled:cursor-not-allowed"
+            aria-invalid={fieldErrors.active ? true : undefined}
+            className={`cursor-pointer rounded-md border bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none focus:ring-2 disabled:cursor-not-allowed ${
+              fieldErrors.active
+                ? "border-red-500 ring-red-500 focus:border-red-500 focus:ring-red-500"
+                : "border-slate-300 ring-blue-500 focus:border-blue-500 focus:ring-blue-500"
+            }`}
             defaultValue="true"
           >
             <option value="true">{ru.users.active}</option>
             <option value="false">{ru.users.inactive}</option>
           </select>
+          {fieldErrors.active ? <p className="text-sm text-red-600">{fieldErrors.active}</p> : null}
         </div>
 
-        {err ? <p className="text-sm text-red-600">{err}</p> : null}
+        {err && Object.keys(fieldErrors).length === 0 ? (
+          <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+            {err}
+          </p>
+        ) : null}
 
         <div className="flex flex-wrap gap-2">
           <Button type="submit" disabled={pending || roles.length === 0}>

@@ -17,6 +17,7 @@ export function Select({
   ...props
 }: Props) {
   const inputId = id ?? props.name;
+  const err = Boolean(error);
   return (
     <div className="flex flex-col gap-1">
       {label ? (
@@ -27,7 +28,12 @@ export function Select({
       <select
         id={inputId}
         title={placeholderOption}
-        className={`cursor-pointer rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none ring-blue-500 focus:border-blue-500 focus:ring-2 disabled:cursor-not-allowed ${className}`}
+        aria-invalid={err || undefined}
+        className={`cursor-pointer rounded-md border bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none focus:ring-2 disabled:cursor-not-allowed ${
+          err
+            ? "border-red-500 ring-red-500 focus:border-red-500 focus:ring-red-500"
+            : "border-slate-300 ring-blue-500 focus:border-blue-500 focus:ring-blue-500"
+        } ${className}`}
         {...props}
       >
         {children}

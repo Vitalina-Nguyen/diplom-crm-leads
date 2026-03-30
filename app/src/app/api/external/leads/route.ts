@@ -75,7 +75,10 @@ export async function POST(request: NextRequest) {
       createdById: admin.id,
       companyName: parsed.data.companyName,
       contactName: parsed.data.contactName,
+      budget: parsed.data.budget,
       description: parsed.data.description,
+      finishDate: parsed.data.finishDate,
+      contacts: parsed.data.contacts,
     });
     revalidatePath("/leads");
     return json({ id, ok: true }, 201);

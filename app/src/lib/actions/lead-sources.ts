@@ -6,7 +6,9 @@ import { isProtectedLeadSourceName } from "@/lib/lead-sources";
 import { revalidatePath } from "next/cache";
 import { ru } from "@/messages/ru";
 
-export type LeadSourceActionResult = { ok: true } | { ok: false; error: string };
+export type LeadSourceActionResult =
+  | { ok: true }
+  | { ok: false; error: string; fieldErrors?: Record<string, string> };
 
 function normalizeSourceName(raw: string): string {
   return raw.trim().replace(/\s+/g, " ");
@@ -17,10 +19,18 @@ export async function createLeadSourceAdmin(formData: FormData): Promise<LeadSou
 
   const name = normalizeSourceName(String(formData.get("name") ?? ""));
   if (!name) {
-    return { ok: false, error: ru.errors.leadSourceNameRequired };
+    return {
+      ok: false,
+      error: ru.errors.leadSourceNameRequired,
+      fieldErrors: { name: ru.errors.leadSourceNameRequired },
+    };
   }
   if (name.length > 120) {
-    return { ok: false, error: ru.errors.leadSourceNameTooLong };
+    return {
+      ok: false,
+      error: ru.errors.leadSourceNameTooLong,
+      fieldErrors: { name: ru.errors.leadSourceNameTooLong },
+    };
   }
 
   try {
@@ -28,7 +38,11 @@ export async function createLeadSourceAdmin(formData: FormData): Promise<LeadSou
   } catch (e: unknown) {
     const code = typeof e === "object" && e && "code" in e ? String((e as { code: string }).code) : "";
     if (code === "P2002") {
-      return { ok: false, error: ru.errors.leadSourceNameTaken };
+      return {
+        ok: false,
+        error: ru.errors.leadSourceNameTaken,
+        fieldErrors: { name: ru.errors.leadSourceNameTaken },
+      };
     }
     console.error(e);
     return { ok: false, error: ru.errors.createLeadSourceFailed };

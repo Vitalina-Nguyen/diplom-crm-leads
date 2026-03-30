@@ -279,6 +279,8 @@ export const ru = {
     passwordMin8: "Пароль не короче 8 символов",
     priorityRequired: "Выберите приоритет",
     invalidUuid: "Некорректный идентификатор (UUID)",
+    budgetRequired: "Укажите бюджет",
+    budgetInvalid: "Некорректная сумма бюджета",
   },
   history: {
     leadCreated: "Лид создан",

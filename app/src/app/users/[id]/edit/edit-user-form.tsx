@@ -33,20 +33,25 @@ export function EditUserForm({
   const [pending, start] = useTransition();
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   return (
     <Card>
       <CardTitle className="mb-6">{ru.users.editTitle}</CardTitle>
       <form
         className="flex max-w-xl flex-col gap-4"
-        action={(fd) => {
+        onSubmit={(e) => {
+          e.preventDefault();
           setMsg(null);
           setErr(null);
+          setFieldErrors({});
+          const fd = new FormData(e.currentTarget);
           fd.set("userId", String(user.id));
           start(async () => {
             const r = await updateUserAdmin(fd);
             if (!r.ok) {
               setErr(r.error);
+              setFieldErrors(r.fieldErrors ?? {});
               return;
             }
             setMsg(ru.users.flashSaved);
@@ -56,16 +61,29 @@ export function EditUserForm({
       >
         <input type="hidden" name="userId" value={user.id} readOnly />
 
-        <Input name="fullName" label={ru.users.colFullName} required defaultValue={user.fullName} />
+        <Input
+          name="fullName"
+          label={ru.users.colFullName}
+          required
+          defaultValue={user.fullName}
+          error={fieldErrors.fullName}
+        />
         <Input
           name="email"
           type="email"
           label={ru.users.colEmail}
           required
           defaultValue={user.email}
+          error={fieldErrors.email}
         />
 
-        <Select name="roleId" label={ru.users.fieldRole} required defaultValue={String(user.roleId)}>
+        <Select
+          name="roleId"
+          label={ru.users.fieldRole}
+          required
+          defaultValue={String(user.roleId)}
+          error={fieldErrors.roleId}
+        >
           {roles.map((r) => (
             <option key={r.id} value={r.id}>
               {formatRoleName(r.name)}
@@ -78,12 +96,18 @@ export function EditUserForm({
           <select
             id="active"
             name="active"
-            className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none ring-blue-500 focus:border-blue-500 focus:ring-2"
+            aria-invalid={fieldErrors.active ? true : undefined}
+            className={`rounded-md border bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none focus:ring-2 ${
+              fieldErrors.active
+                ? "border-red-500 ring-red-500 focus:border-red-500 focus:ring-red-500"
+                : "border-slate-300 ring-blue-500 focus:border-blue-500 focus:ring-blue-500"
+            }`}
             defaultValue={user.active ? "true" : "false"}
           >
             <option value="true">{ru.users.active}</option>
             <option value="false">{ru.users.inactive}</option>
           </select>
+          {fieldErrors.active ? <p className="text-sm text-red-600">{fieldErrors.active}</p> : null}
         </div>
 
         <Input
@@ -92,10 +116,15 @@ export function EditUserForm({
           label={ru.users.newPassword}
           placeholder={ru.users.newPasswordHint}
           autoComplete="new-password"
+          error={fieldErrors.newPassword}
         />
         <p className="text-xs text-slate-500">{ru.users.newPasswordHint}</p>
 
-        {err ? <p className="text-sm text-red-600">{err}</p> : null}
+        {err && Object.keys(fieldErrors).length === 0 ? (
+          <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+            {err}
+          </p>
+        ) : null}
         {msg ? <p className="text-sm text-emerald-700">{msg}</p> : null}
 
         <div className="flex flex-wrap gap-2">

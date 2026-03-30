@@ -58,9 +58,15 @@ export function EditLeadClient({
   const [pending, start] = useTransition();
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [leadFieldErrors, setLeadFieldErrors] = useState<Record<string, string>>({});
+  const [priorityFieldErrors, setPriorityFieldErrors] = useState<Record<string, string>>({});
+  const [statusFieldErrors, setStatusFieldErrors] = useState<Record<string, string>>({});
+  const [newContactFieldErrors, setNewContactFieldErrors] = useState<Record<string, string>>({});
+  const [addAssigneeFieldErrors, setAddAssigneeFieldErrors] = useState<Record<string, string>>({});
 
-  function flash(ok: boolean, text: string) {
-    setErr(ok ? null : text);
+  function flash(ok: boolean, text: string, fieldErrors?: Record<string, string>) {
+    const fe = fieldErrors ?? {};
+    setErr(ok ? null : Object.keys(fe).length > 0 ? null : text);
     setMsg(ok ? text : null);
   }
 
@@ -93,13 +99,21 @@ export function EditLeadClient({
       <Card>
         <form
           className="grid gap-4 md:grid-cols-2"
-          action={(fd) => {
+          onSubmit={(e) => {
+            e.preventDefault();
             setMsg(null);
             setErr(null);
+            setLeadFieldErrors({});
+            const fd = new FormData(e.currentTarget);
             fd.set("leadId", lead.id);
             start(async () => {
               const r = await updateLead(fd);
-              flash(r.ok, r.ok ? ru.editLead.flashLeadUpdated : r.error);
+              if (!r.ok) {
+                setLeadFieldErrors(r.fieldErrors ?? {});
+              } else {
+                setLeadFieldErrors({});
+              }
+              flash(r.ok, r.ok ? ru.editLead.flashLeadUpdated : r.error, !r.ok ? r.fieldErrors : undefined);
               if (r.ok) router.refresh();
             });
           }}
@@ -110,15 +124,23 @@ export function EditLeadClient({
             label={ru.newLead.companyName}
             required
             defaultValue={lead.companyName}
+            error={leadFieldErrors.companyName}
           />
           <Input
             name="contactName"
             label={ru.newLead.contactName}
             required
             defaultValue={lead.contactName}
+            error={leadFieldErrors.contactName}
           />
           <div className="md:col-span-2">
-            <Select name="sourceId" label={ru.newLead.source} required defaultValue={String(lead.sourceId)}>
+            <Select
+              name="sourceId"
+              label={ru.newLead.source}
+              required
+              defaultValue={String(lead.sourceId)}
+              error={leadFieldErrors.sourceId}
+            >
               {sources.map((s) => (
                 <option key={s.id} value={s.id}>
                   {formatLeadSourceName(s.name)}
@@ -131,15 +153,23 @@ export function EditLeadClient({
               name="description"
               label={ru.newLead.description}
               defaultValue={lead.description ?? ""}
+              error={leadFieldErrors.description}
             />
           </div>
-          <Input name="budget" label={ru.newLead.budget} defaultValue={lead.budget} />
+          <Input
+            name="budget"
+            label={ru.newLead.budget}
+            required
+            defaultValue={lead.budget}
+            error={leadFieldErrors.budget}
+          />
           <Input
             name="finishDate"
             type="date"
             label={ru.newLead.finishDate}
             defaultValue={lead.finishDate}
             placeholder={ru.newLead.finishDateHint}
+            error={leadFieldErrors.finishDate}
           />
           <div className="md:col-span-2">
             <Button type="submit" disabled={pending}>
@@ -153,13 +183,18 @@ export function EditLeadClient({
         <CardTitle className="mb-4">{ru.editLead.priority}</CardTitle>
         <form
           className="flex max-w-xl flex-col gap-3"
-          action={(fd) => {
+          onSubmit={(e) => {
+            e.preventDefault();
             setMsg(null);
             setErr(null);
+            setPriorityFieldErrors({});
+            const fd = new FormData(e.currentTarget);
             fd.set("leadId", lead.id);
             start(async () => {
               const r = await updateLeadPriority(fd);
-              flash(r.ok, r.ok ? ru.editLead.flashPriorityUpdated : r.error);
+              if (!r.ok) setPriorityFieldErrors(r.fieldErrors ?? {});
+              else setPriorityFieldErrors({});
+              flash(r.ok, r.ok ? ru.editLead.flashPriorityUpdated : r.error, !r.ok ? r.fieldErrors : undefined);
               if (r.ok) router.refresh();
             });
           }}
@@ -172,6 +207,7 @@ export function EditLeadClient({
             required
             defaultValue={lead.priority}
             placeholderOption={ru.editLead.priorityField}
+            error={priorityFieldErrors.newPriority}
           >
             {priorityOptions.map((p) => (
               <option key={p} value={p}>
@@ -183,6 +219,7 @@ export function EditLeadClient({
             name="comment"
             label={ru.editLead.commentOptional}
             placeholder={ru.editLead.statusCommentPlaceholder}
+            error={priorityFieldErrors.comment}
           />
           <Button type="submit" disabled={pending}>
             {ru.editLead.updatePriority}
@@ -197,13 +234,18 @@ export function EditLeadClient({
         ) : (
           <form
             className="flex max-w-xl flex-col gap-3"
-            action={(fd) => {
+            onSubmit={(e) => {
+              e.preventDefault();
               setMsg(null);
               setErr(null);
+              setStatusFieldErrors({});
+              const fd = new FormData(e.currentTarget);
               fd.set("leadId", lead.id);
               start(async () => {
                 const r = await updateLeadStatus(fd);
-                flash(r.ok, r.ok ? ru.editLead.flashStatusUpdated : r.error);
+                if (!r.ok) setStatusFieldErrors(r.fieldErrors ?? {});
+                else setStatusFieldErrors({});
+                flash(r.ok, r.ok ? ru.editLead.flashStatusUpdated : r.error, !r.ok ? r.fieldErrors : undefined);
                 if (r.ok) router.refresh();
               });
             }}
@@ -216,6 +258,7 @@ export function EditLeadClient({
               required
               defaultValue={lead.status}
               placeholderOption={ru.editLead.newStatus}
+              error={statusFieldErrors.newStatus}
             >
               {statusOptions.map((s) => (
                 <option key={s} value={s}>
@@ -227,6 +270,7 @@ export function EditLeadClient({
               name="comment"
               label={ru.editLead.commentOptional}
               placeholder={ru.editLead.statusCommentPlaceholder}
+              error={statusFieldErrors.comment}
             />
             <Button type="submit" disabled={pending}>
               {ru.editLead.updateStatus}
@@ -254,14 +298,16 @@ export function EditLeadClient({
                     : {c.sourceValue}
                   </span>
                   <form
-                    action={(fd) => {
+                    onSubmit={(e) => {
+                      e.preventDefault();
                       setMsg(null);
                       setErr(null);
+                      const fd = new FormData(e.currentTarget);
                       fd.set("leadId", lead.id);
                       fd.set("contactId", String(c.id));
                       start(async () => {
                         const r = await removeLeadContact(fd);
-                        flash(r.ok, r.ok ? ru.editLead.flashContactRemoved : r.error);
+                        flash(r.ok, r.ok ? ru.editLead.flashContactRemoved : r.error, !r.ok ? r.fieldErrors : undefined);
                         if (r.ok) router.refresh();
                       });
                     }}
@@ -279,13 +325,18 @@ export function EditLeadClient({
 
           <form
             className="grid gap-3 md:grid-cols-3"
-            action={(fd) => {
+            onSubmit={(e) => {
+              e.preventDefault();
               setMsg(null);
               setErr(null);
+              setNewContactFieldErrors({});
+              const fd = new FormData(e.currentTarget);
               fd.set("leadId", lead.id);
               start(async () => {
                 const r = await addLeadContact(fd);
-                flash(r.ok, r.ok ? ru.editLead.flashContactAdded : r.error);
+                if (!r.ok) setNewContactFieldErrors(r.fieldErrors ?? {});
+                else setNewContactFieldErrors({});
+                flash(r.ok, r.ok ? ru.editLead.flashContactAdded : r.error, !r.ok ? r.fieldErrors : undefined);
                 if (r.ok) router.refresh();
               });
             }}
@@ -297,6 +348,7 @@ export function EditLeadClient({
               required
               defaultValue="EMAIL"
               className="normal-case"
+              error={newContactFieldErrors.sourceType}
             >
               {CONTACT_SOURCE_TYPES.map((t) => (
                 <option key={t} value={t}>
@@ -309,6 +361,7 @@ export function EditLeadClient({
               label={ru.editLead.value}
               required
               className="md:col-span-2"
+              error={newContactFieldErrors.sourceValue}
             />
             <div className="md:col-span-3">
               <Button type="submit" variant="secondary" disabled={pending}>
@@ -334,14 +387,16 @@ export function EditLeadClient({
                   </div>
                   <form
                     className="flex flex-col gap-2"
-                    action={(fd) => {
+                    onSubmit={(e) => {
+                      e.preventDefault();
                       setMsg(null);
                       setErr(null);
+                      const fd = new FormData(e.currentTarget);
                       fd.set("leadId", lead.id);
                       fd.set("userId", a.userId);
                       start(async () => {
                         const r = await removeLeadAssignee(fd);
-                        flash(r.ok, r.ok ? ru.editLead.flashAssigneeRemoved : r.error);
+                        flash(r.ok, r.ok ? ru.editLead.flashAssigneeRemoved : r.error, !r.ok ? r.fieldErrors : undefined);
                         if (r.ok) router.refresh();
                       });
                     }}
@@ -370,19 +425,30 @@ export function EditLeadClient({
             ) : (
               <form
                 className="flex max-w-xl flex-col gap-2"
-                action={(fd) => {
+                onSubmit={(e) => {
+                  e.preventDefault();
                   setMsg(null);
                   setErr(null);
+                  setAddAssigneeFieldErrors({});
+                  const fd = new FormData(e.currentTarget);
                   fd.set("leadId", lead.id);
                   start(async () => {
                     const r = await addLeadAssignee(fd);
-                    flash(r.ok, r.ok ? ru.editLead.flashAssigneeAdded : r.error);
+                    if (!r.ok) setAddAssigneeFieldErrors(r.fieldErrors ?? {});
+                    else setAddAssigneeFieldErrors({});
+                    flash(r.ok, r.ok ? ru.editLead.flashAssigneeAdded : r.error, !r.ok ? r.fieldErrors : undefined);
                     if (r.ok) router.refresh();
                   });
                 }}
               >
                 <input type="hidden" name="leadId" value={lead.id} readOnly />
-                <Select name="userId" label={ru.editLead.userField} required defaultValue="">
+                <Select
+                  name="userId"
+                  label={ru.editLead.userField}
+                  required
+                  defaultValue=""
+                  error={addAssigneeFieldErrors.userId}
+                >
                   <option value="" disabled>
                     {ru.editLead.selectUser}
                   </option>
@@ -397,6 +463,7 @@ export function EditLeadClient({
                   label={ru.editLead.commentOptional}
                   placeholder={ru.editLead.statusCommentPlaceholder}
                   className="min-h-[64px]"
+                  error={addAssigneeFieldErrors.comment}
                 />
                 <Button type="submit" variant="secondary" disabled={pending}>
                   {ru.editLead.addAssignee}

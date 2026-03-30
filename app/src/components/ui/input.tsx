@@ -10,6 +10,7 @@ export function Input({ label, error, id, className = "", placeholder, ...props 
       : typeof label === "string"
         ? label
         : undefined;
+  const err = Boolean(error);
   return (
     <div className="flex flex-col gap-1">
       {label ? (
@@ -20,7 +21,12 @@ export function Input({ label, error, id, className = "", placeholder, ...props 
       <input
         id={inputId}
         placeholder={ph}
-        className={`rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none ring-blue-500 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 ${className}`}
+        aria-invalid={err || undefined}
+        className={`rounded-md border bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none placeholder:text-slate-400 focus:ring-2 ${
+          err
+            ? "border-red-500 ring-red-500 focus:border-red-500 focus:ring-red-500"
+            : "border-slate-300 ring-blue-500 focus:border-blue-500 focus:ring-blue-500"
+        } ${className}`}
         {...props}
       />
       {error ? <p className="text-sm text-red-600">{error}</p> : null}

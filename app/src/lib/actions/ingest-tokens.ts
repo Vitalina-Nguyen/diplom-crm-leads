@@ -12,17 +12,25 @@ function normalizeSourceName(raw: string): string {
 
 export type CreateIngestTokenResult =
   | { ok: true; plainToken: string }
-  | { ok: false; error: string };
+  | { ok: false; error: string; fieldErrors?: Record<string, string> };
 
 export async function createIngestTokenAction(formData: FormData): Promise<CreateIngestTokenResult> {
   await requireAdmin();
 
   const displayName = String(formData.get("displayName") ?? "").trim();
   if (!displayName) {
-    return { ok: false, error: ru.errors.ingestTokenDisplayNameRequired };
+    return {
+      ok: false,
+      error: ru.errors.ingestTokenDisplayNameRequired,
+      fieldErrors: { displayName: ru.errors.ingestTokenDisplayNameRequired },
+    };
   }
   if (displayName.length > 200) {
-    return { ok: false, error: ru.errors.ingestTokenDisplayNameTooLong };
+    return {
+      ok: false,
+      error: ru.errors.ingestTokenDisplayNameTooLong,
+      fieldErrors: { displayName: ru.errors.ingestTokenDisplayNameTooLong },
+    };
   }
 
   const sourceMode = String(formData.get("sourceMode") ?? "existing");
@@ -66,17 +74,33 @@ export async function createIngestTokenAction(formData: FormData): Promise<Creat
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "";
     if (msg === "SOURCE_NAME_REQUIRED") {
-      return { ok: false, error: ru.errors.leadSourceNameRequired };
+      return {
+        ok: false,
+        error: ru.errors.leadSourceNameRequired,
+        fieldErrors: { newSourceName: ru.errors.leadSourceNameRequired },
+      };
     }
     if (msg === "SOURCE_NAME_TOO_LONG") {
-      return { ok: false, error: ru.errors.leadSourceNameTooLong };
+      return {
+        ok: false,
+        error: ru.errors.leadSourceNameTooLong,
+        fieldErrors: { newSourceName: ru.errors.leadSourceNameTooLong },
+      };
     }
     if (msg === "SOURCE_NOT_FOUND") {
-      return { ok: false, error: ru.errors.leadSourceNotFound };
+      return {
+        ok: false,
+        error: ru.errors.leadSourceNotFound,
+        fieldErrors: { sourceId: ru.errors.leadSourceNotFound },
+      };
     }
     const code = typeof e === "object" && e && "code" in e ? String((e as { code: string }).code) : "";
     if (code === "P2002") {
-      return { ok: false, error: ru.errors.leadSourceNameTaken };
+      return {
+        ok: false,
+        error: ru.errors.leadSourceNameTaken,
+        fieldErrors: { newSourceName: ru.errors.leadSourceNameTaken },
+      };
     }
     console.error(e);
     return { ok: false, error: ru.errors.ingestTokenCreateFailed };

@@ -10,8 +10,20 @@ import {
   updateUserAdminSchema,
 } from "@/lib/validations/user-admin";
 import { ru } from "@/messages/ru";
+import { fieldErrorsFromZodError } from "@/lib/zod-field-errors";
+import type { ZodError } from "zod";
 
-export type UserAdminActionResult = { ok: true } | { ok: false; error: string };
+export type UserAdminActionResult =
+  | { ok: true }
+  | { ok: false; error: string; fieldErrors?: Record<string, string> };
+
+function zodUserFail(error: ZodError): UserAdminActionResult {
+  return {
+    ok: false,
+    error: error.issues[0]?.message ?? ru.errors.validationFailed,
+    fieldErrors: fieldErrorsFromZodError(error),
+  };
+}
 
 function revalidateUserPaths(userId: string) {
   revalidatePath("/users");
@@ -59,13 +71,13 @@ export async function createUserAdmin(formData: FormData): Promise<UserAdminActi
     active: formData.get("active"),
   });
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? ru.errors.validationFailed };
+    return zodUserFail(parsed.error);
   }
 
   const email = parsed.data.email.toLowerCase();
   const dup = await prisma.user.findFirst({ where: { email } });
   if (dup) {
-    return { ok: false, error: ru.errors.emailTaken };
+    return { ok: false, error: ru.errors.emailTaken, fieldErrors: { email: ru.errors.emailTaken } };
   }
 
   try {
@@ -100,7 +112,7 @@ export async function updateUserAdmin(formData: FormData): Promise<UserAdminActi
     newPassword: formData.get("newPassword") ?? undefined,
   });
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? ru.errors.validationFailed };
+    return zodUserFail(parsed.error);
   }
 
   const target = await prisma.user.findUnique({
@@ -125,7 +137,7 @@ export async function updateUserAdmin(formData: FormData): Promise<UserAdminActi
     where: { email, NOT: { id: target.id } },
   });
   if (dup) {
-    return { ok: false, error: ru.errors.emailTaken };
+    return { ok: false, error: ru.errors.emailTaken, fieldErrors: { email: ru.errors.emailTaken } };
   }
 
   try {
@@ -162,7 +174,7 @@ export async function deactivateUserAdmin(userId: string): Promise<UserAdminActi
 
   const parsed = deactivateUserAdminSchema.safeParse({ userId });
   if (!parsed.success) {
-    return { ok: false, error: ru.errors.validationFailed };
+    return zodUserFail(parsed.error);
   }
 
   if (parsed.data.userId === editor.id) {

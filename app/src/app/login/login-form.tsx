@@ -13,16 +13,42 @@ export function LoginForm() {
   return (
     <Card className="w-full max-w-md">
       <CardTitle className="mb-6">{ru.login.title}</CardTitle>
-      <form action={formAction} className="flex flex-col gap-4">
-        <Input name="email" type="email" label={ru.login.email} autoComplete="email" required />
+      <form
+        className="flex flex-col gap-4"
+        onSubmit={(e) => {
+          e.preventDefault();
+          formAction(new FormData(e.currentTarget));
+        }}
+      >
+        <Input
+          name="email"
+          type="email"
+          label={ru.login.email}
+          autoComplete="email"
+          required
+          error={state?.fieldErrors?.email}
+        />
         <Input
           name="password"
           type="password"
           label={ru.login.password}
           autoComplete="current-password"
           required
+          error={state?.fieldErrors?.password}
         />
-        {state?.error ? <p className="text-sm text-red-600">{state.error}</p> : null}
+        {state?.fieldErrors?._form ? (
+          <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+            {state.fieldErrors._form}
+          </p>
+        ) : null}
+        {state?.error &&
+        !state.fieldErrors?.email &&
+        !state.fieldErrors?.password &&
+        !state.fieldErrors?._form ? (
+          <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+            {state.error}
+          </p>
+        ) : null}
         <Button type="submit" disabled={pending} className="w-full">
           {pending ? ru.common.signingIn : ru.login.submit}
         </Button>

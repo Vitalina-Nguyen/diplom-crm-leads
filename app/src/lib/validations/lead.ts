@@ -1,14 +1,27 @@
-import { LeadPriority, LeadStatus } from "@prisma/client";
+import { LeadPriority, LeadStatus, Prisma } from "@prisma/client";
 import { ru } from "@/messages/ru";
 import { z } from "zod";
 
 const statusEnum = z.nativeEnum(LeadStatus);
 const priorityEnum = z.nativeEnum(LeadPriority);
 
-const budgetField = z
-  .string()
-  .optional()
-  .transform((v) => (v === undefined || v.trim() === "" ? undefined : v.trim()));
+const budgetField = z.preprocess(
+  (v) => (v === undefined || v === null ? "" : String(v)),
+  z
+    .string()
+    .trim()
+    .min(1, ru.validation.budgetRequired)
+    .superRefine((s, ctx) => {
+      try {
+        const d = new Prisma.Decimal(s);
+        if (!d.isFinite()) {
+          ctx.addIssue({ code: "custom", message: ru.validation.budgetInvalid });
+        }
+      } catch {
+        ctx.addIssue({ code: "custom", message: ru.validation.budgetInvalid });
+      }
+    }),
+);
 
 const finishDateField = z
   .string()

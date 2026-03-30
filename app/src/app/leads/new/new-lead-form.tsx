@@ -22,6 +22,7 @@ export function NewLeadForm({ sources, users }: { sources: Source[]; users: User
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [contacts, setContacts] = useState<ContactRow[]>([]);
   const [useAutoPriority, setUseAutoPriority] = useState(true);
 
@@ -38,12 +39,16 @@ export function NewLeadForm({ sources, users }: { sources: Source[]; users: User
       <CardTitle className="mb-6">{ru.newLead.title}</CardTitle>
       <form
         className="flex flex-col gap-4"
-        action={(fd) => {
+        onSubmit={(e) => {
+          e.preventDefault();
           setError(null);
+          setFieldErrors({});
+          const fd = new FormData(e.currentTarget);
           start(async () => {
             const res = await createLead(fd);
             if (!res.ok) {
               setError(res.error);
+              setFieldErrors(res.fieldErrors ?? {});
               return;
             }
             router.push("/leads");
@@ -55,8 +60,18 @@ export function NewLeadForm({ sources, users }: { sources: Source[]; users: User
         <input type="hidden" name="useAutoPriority" value={useAutoPriority ? "1" : "0"} readOnly />
 
         <div className="grid gap-4 md:grid-cols-2">
-          <Input name="companyName" label={ru.newLead.companyName} required />
-          <Input name="contactName" label={ru.newLead.contactName} required />
+          <Input
+            name="companyName"
+            label={ru.newLead.companyName}
+            required
+            error={fieldErrors.companyName}
+          />
+          <Input
+            name="contactName"
+            label={ru.newLead.contactName}
+            required
+            error={fieldErrors.contactName}
+          />
         </div>
 
         <Select
@@ -65,6 +80,7 @@ export function NewLeadForm({ sources, users }: { sources: Source[]; users: User
           required
           defaultValue=""
           placeholderOption={ru.newLead.selectSource}
+          error={fieldErrors.sourceId}
         >
           <option value="" disabled>
             {ru.newLead.selectSource}
@@ -76,17 +92,24 @@ export function NewLeadForm({ sources, users }: { sources: Source[]; users: User
           ))}
         </Select>
 
-        <Textarea name="description" label={ru.newLead.description} />
+        <Textarea
+          name="description"
+          label={ru.newLead.description}
+          error={fieldErrors.description}
+        />
         <Input
           name="budget"
           label={ru.newLead.budget}
           placeholder={ru.newLead.budgetPlaceholder}
+          required
+          error={fieldErrors.budget}
         />
         <Input
           name="finishDate"
           type="date"
           label={ru.newLead.finishDate}
           placeholder={ru.newLead.finishDateHint}
+          error={fieldErrors.finishDate}
         />
 
         <div className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-slate-50 p-4">
@@ -112,6 +135,7 @@ export function NewLeadForm({ sources, users }: { sources: Source[]; users: User
             label={ru.newLead.priority}
             required
             defaultValue={LeadPriority.MEDIUM}
+            error={fieldErrors.priority}
           >
             {(Object.values(LeadPriority) as LeadPriority[]).map((p) => (
               <option key={p} value={p}>
@@ -127,7 +151,12 @@ export function NewLeadForm({ sources, users }: { sources: Source[]; users: User
             name="assigneeIds"
             multiple
             title={ru.newLead.assigneesOptional}
-            className="min-h-[120px] w-full cursor-pointer rounded-md border border-slate-300 bg-white px-3 py-2 text-sm disabled:cursor-not-allowed"
+            aria-invalid={fieldErrors.assigneeIds ? true : undefined}
+            className={`min-h-[120px] w-full cursor-pointer rounded-md border bg-white px-3 py-2 text-sm disabled:cursor-not-allowed ${
+              fieldErrors.assigneeIds
+                ? "border-red-500 ring-2 ring-red-500"
+                : "border-slate-300"
+            }`}
           >
             {users.map((u) => (
               <option key={u.id} value={u.id}>
@@ -135,10 +164,17 @@ export function NewLeadForm({ sources, users }: { sources: Source[]; users: User
               </option>
             ))}
           </select>
+          {fieldErrors.assigneeIds ? (
+            <p className="mt-1 text-sm text-red-600">{fieldErrors.assigneeIds}</p>
+          ) : null}
           <p className="mt-1 text-xs text-slate-500">{ru.newLead.multiSelectHint}</p>
         </div>
 
-        <div className="rounded-lg border border-slate-200 p-4">
+        <div
+          className={`rounded-lg border p-4 ${
+            fieldErrors.contacts || fieldErrors.contactsJson ? "border-red-300 bg-red-50/50" : "border-slate-200"
+          }`}
+        >
           <div className="mb-2 flex items-center justify-between gap-2">
             <Label>{ru.newLead.contactsOptional}</Label>
             <Button
@@ -192,9 +228,18 @@ export function NewLeadForm({ sources, users }: { sources: Source[]; users: User
               </div>
             ))}
           </div>
+          {fieldErrors.contacts || fieldErrors.contactsJson ? (
+            <p className="mt-2 text-sm text-red-600">
+              {fieldErrors.contacts ?? fieldErrors.contactsJson}
+            </p>
+          ) : null}
         </div>
 
-        {error ? <p className="text-sm text-red-600">{error}</p> : null}
+        {error && Object.keys(fieldErrors).length === 0 ? (
+          <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+            {error}
+          </p>
+        ) : null}
 
         <div className="flex gap-2">
           <Button type="submit" disabled={pending}>

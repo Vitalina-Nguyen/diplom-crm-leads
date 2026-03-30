@@ -17,6 +17,7 @@ export function LeadSourcesAdmin({ sources }: { sources: Row[] }) {
   const [pending, start] = useTransition();
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [nameError, setNameError] = useState<string | undefined>(undefined);
 
   return (
     <div className="space-y-8">
@@ -24,9 +25,12 @@ export function LeadSourcesAdmin({ sources }: { sources: Row[] }) {
         <CardTitle className="mb-4">{ru.leadSources.addTitle}</CardTitle>
         <form
           className="flex max-w-xl flex-col gap-4"
-          action={(fd) => {
+          onSubmit={(e) => {
+            e.preventDefault();
             setMsg(null);
             setErr(null);
+            setNameError(undefined);
+            const fd = new FormData(e.currentTarget);
             start(async () => {
               const r = await createLeadSourceAdmin(fd);
               if (r.ok) {
@@ -34,13 +38,24 @@ export function LeadSourcesAdmin({ sources }: { sources: Row[] }) {
                 router.refresh();
               } else {
                 setErr(r.error);
+                setNameError(r.fieldErrors?.name);
               }
             });
           }}
         >
-          <Input name="name" label={ru.leadSources.nameLabel} required maxLength={120} />
+          <Input
+            name="name"
+            label={ru.leadSources.nameLabel}
+            required
+            maxLength={120}
+            error={nameError}
+          />
 
-          {err ? <p className="text-sm text-red-600">{err}</p> : null}
+          {err && !nameError ? (
+            <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+              {err}
+            </p>
+          ) : null}
 
           <Button type="submit" disabled={pending}>
             {pending ? ru.common.saving : ru.leadSources.create}

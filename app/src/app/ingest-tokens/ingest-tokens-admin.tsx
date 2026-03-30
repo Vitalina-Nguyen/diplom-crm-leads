@@ -35,6 +35,7 @@ export function IngestTokensAdmin({
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [plainToken, setPlainToken] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [sourceMode, setSourceMode] = useState<"existing" | "new">(() =>
@@ -78,13 +79,17 @@ export function IngestTokensAdmin({
         <CardTitle className="mb-4">{ru.ingestTokens.createTitle}</CardTitle>
         <form
           className="flex max-w-xl flex-col gap-4"
-          action={(fd) => {
+          onSubmit={(e) => {
+            e.preventDefault();
             setError(null);
+            setFieldErrors({});
+            const fd = new FormData(e.currentTarget);
             fd.set("sourceMode", sourceMode);
             start(async () => {
               const r = await createIngestTokenAction(fd);
               if (!r.ok) {
                 setError(r.error);
+                setFieldErrors(r.fieldErrors ?? {});
                 return;
               }
               setPlainToken(r.plainToken);
@@ -97,6 +102,7 @@ export function IngestTokensAdmin({
             label={ru.ingestTokens.displayNameLabel}
             required
             placeholder={ru.ingestTokens.displayNameHint}
+            error={fieldErrors.displayName}
           />
 
           <fieldset className="flex flex-col gap-2 rounded-md border border-slate-200 p-3">
@@ -130,6 +136,7 @@ export function IngestTokensAdmin({
                 label={ru.newLead.source}
                 required
                 defaultValue={String(sources[0].id)}
+                error={fieldErrors.sourceId}
               >
                 {sources.map((s) => (
                   <option key={s.id} value={s.id}>
@@ -141,10 +148,19 @@ export function IngestTokensAdmin({
               <p className="text-sm text-amber-800">{ru.ingestTokens.noSourcesPickNew}</p>
             )
           ) : (
-            <Input name="newSourceName" label={ru.ingestTokens.newSourceName} required />
+            <Input
+              name="newSourceName"
+              label={ru.ingestTokens.newSourceName}
+              required
+              error={fieldErrors.newSourceName}
+            />
           )}
 
-          {error ? <p className="text-sm text-red-600">{error}</p> : null}
+          {error && Object.keys(fieldErrors).length === 0 ? (
+            <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+              {error}
+            </p>
+          ) : null}
 
           <Button
             type="submit"

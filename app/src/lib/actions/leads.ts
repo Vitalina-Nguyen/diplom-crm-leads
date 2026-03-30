@@ -18,10 +18,11 @@ import {
   updateLeadStatusSchema,
 } from "@/lib/validations/lead";
 import { ru } from "@/messages/ru";
+import { fieldErrorsFromZodError } from "@/lib/zod-field-errors";
+import type { ZodError } from "zod";
 
-function parseBudget(raw: string | undefined): Prisma.Decimal | null {
-  if (raw === undefined || raw === "") return null;
-  return new Prisma.Decimal(raw);
+function parseBudget(raw: string): Prisma.Decimal {
+  return new Prisma.Decimal(raw.trim());
 }
 
 function parseFinishDate(raw: string | undefined): Date | null {
@@ -36,7 +37,17 @@ function revalidateLeadPaths(leadId: string) {
   revalidatePath(`/leads/${leadId}/edit`);
 }
 
-export type ActionResult = { ok: true } | { ok: false; error: string };
+export type ActionResult =
+  | { ok: true }
+  | { ok: false; error: string; fieldErrors?: Record<string, string> };
+
+function zodValidationFail(error: ZodError): ActionResult {
+  return {
+    ok: false,
+    error: error.issues[0]?.message ?? ru.errors.validationFailed,
+    fieldErrors: fieldErrorsFromZodError(error),
+  };
+}
 
 export async function createLead(formData: FormData): Promise<ActionResult> {
   const session = await requireSession().catch(() => null);
@@ -54,7 +65,11 @@ export async function createLead(formData: FormData): Promise<ActionResult> {
         sourceValue: String((c as { sourceValue?: string }).sourceValue ?? ""),
       }));
     } catch {
-      return { ok: false, error: ru.errors.invalidContactsJson };
+      return {
+        ok: false,
+        error: ru.errors.invalidContactsJson,
+        fieldErrors: { contacts: ru.errors.invalidContactsJson },
+      };
     }
   }
 
@@ -72,7 +87,7 @@ export async function createLead(formData: FormData): Promise<ActionResult> {
     contacts,
   });
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? ru.errors.validationFailed };
+    return zodValidationFail(parsed.error);
   }
 
   const id = uuidv7();
@@ -171,7 +186,7 @@ export async function updateLead(formData: FormData): Promise<ActionResult> {
       typeof formData.get("finishDate") === "string" ? formData.get("finishDate") : undefined,
   });
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? ru.errors.validationFailed };
+    return zodValidationFail(parsed.error);
   }
 
   const lead = await prisma.lead.findUnique({ where: { id: parsed.data.leadId } });
@@ -212,7 +227,7 @@ export async function updateLeadStatus(formData: FormData): Promise<ActionResult
     comment: formData.get("comment") ?? undefined,
   });
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? ru.errors.validationFailed };
+    return zodValidationFail(parsed.error);
   }
 
   const lead = await prisma.lead.findUnique({ where: { id: parsed.data.leadId } });
@@ -259,7 +274,7 @@ export async function updateLeadPriority(formData: FormData): Promise<ActionResu
     comment: formData.get("comment") ?? undefined,
   });
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? ru.errors.validationFailed };
+    return zodValidationFail(parsed.error);
   }
 
   const lead = await prisma.lead.findUnique({ where: { id: parsed.data.leadId } });
@@ -350,7 +365,7 @@ export async function addLeadContact(formData: FormData): Promise<ActionResult> 
     sourceValue: formData.get("sourceValue"),
   });
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? ru.errors.validationFailed };
+    return zodValidationFail(parsed.error);
   }
 
   const lead = await prisma.lead.findUnique({ where: { id: parsed.data.leadId } });
@@ -383,7 +398,7 @@ export async function removeLeadContact(formData: FormData): Promise<ActionResul
     leadId: formData.get("leadId"),
   });
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? ru.errors.validationFailed };
+    return zodValidationFail(parsed.error);
   }
 
   const contact = await prisma.leadContact.findFirst({
@@ -412,7 +427,7 @@ export async function addLeadAssignee(formData: FormData): Promise<ActionResult>
     comment: formData.get("comment") ?? undefined,
   });
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? ru.errors.validationFailed };
+    return zodValidationFail(parsed.error);
   }
 
   const lead = await prisma.lead.findUnique({ where: { id: parsed.data.leadId } });
@@ -464,7 +479,7 @@ export async function removeLeadAssignee(formData: FormData): Promise<ActionResu
     comment: formData.get("comment") ?? undefined,
   });
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? ru.errors.validationFailed };
+    return zodValidationFail(parsed.error);
   }
 
   const leadForAssignee = await prisma.lead.findUnique({ where: { id: parsed.data.leadId } });
